@@ -1,22 +1,10 @@
-import { getData, sum } from "../utils";
+import { getData, transpose } from "../utils";
 
 const data = getData(__dirname);
 
 export const getInput = (input: string): [string[][], number[][]] => {
   const data = input.split("\n\n");
 
-  // Transforms
-  //     [D]
-  // [N] [C]
-  // [Z] [M] [P]
-  //  1   2   3
-  // to
-  // [
-  //   [ '0', 'D', '0' ],
-  //   [ 'N', 'C', '0' ],
-  //   [ 'Z', 'M', 'P' ],
-  //   [ '1', '2', '3' ]
-  // ]
   const storage = data[0]
     .replaceAll("    ", "[0] ")
     .trim()
@@ -24,30 +12,12 @@ export const getInput = (input: string): [string[][], number[][]] => {
     .split("\n")
     .map((line) => line.split(""));
 
-  // remove last line and reverse the array
   storage.pop();
   storage.reverse();
-  const length = storage[0].length;
 
-  // storage
-  // [
-  //   [ 'Z', 'M', 'P' ],
-  //   [ 'N', 'C', '0' ],
-  //   [ '0', 'D', '0' ],
-  // ]
-
-  const stacks = [];
-  for (let i = 0; i < length; i++) {
-    stacks.push(
-      storage.map((line) => line[i]).filter((character) => character != "0")
-    );
-  }
-  // stacks
-  // [
-  //    [ 'Z', 'N' ],
-  //    [ 'M', 'C', 'D' ],
-  //    [ 'P' ]
-  // ]
+  const stacks = transpose(storage).map((line) =>
+    line.filter((character) => character != "0")
+  );
 
   const moves = data[1]
     .replaceAll(/move |from |to /g, "")

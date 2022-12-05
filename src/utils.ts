@@ -8,3 +8,7 @@ export function getData(dir: string) {
 }
 
 export const sum = (n: number[]) => n.reduce((value, sum) => value + sum, 0);
+
+export const transpose = <T>(matrix: T[][]): T[][] => {
+  return matrix[0].map((_, colIndex) => matrix.map((row) => row[colIndex]));
+};
