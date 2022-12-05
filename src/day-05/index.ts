@@ -39,12 +39,7 @@ export const getInput = (input: string): [string[][], number[][]] => {
   const stacks = [];
   for (let i = 0; i < length; i++) {
     stacks.push(
-      storage
-        .map((line) => line[i])
-        .join("")
-        .replaceAll(" ", "")
-        .split("")
-        .filter((character) => character != "0")
+      storage.map((line) => line[i]).filter((character) => character != "0")
     );
   }
   // stacks
@@ -63,48 +58,33 @@ export const getInput = (input: string): [string[][], number[][]] => {
   return [stacks, moves];
 };
 
-const makeMoveOneCrates = (stacks: string[][], move: number[]) => {
-  const [times, from, to] = move;
-  const toArray = stacks[to - 1];
-  const fromArray = stacks[from - 1];
-
-  for (let i = 0; i < times; i++) {
-    toArray.push(fromArray.pop() || "");
-  }
-};
-
-const makeMoveManyCrates = (stacks: string[][], move: number[]) => {
-  const [times, from, to] = move;
-  const toArray = stacks[to - 1];
-  const fromArray = stacks[from - 1];
-
-  toArray.push(...fromArray.slice(times * -1));
-  fromArray.splice(times * -1);
-};
-
 export const solution1 = (input: string) => {
   const [stacks, moves] = getInput(input);
   moves.forEach((move) => {
-    makeMoveOneCrates(stacks, move);
+    const [times, from, to] = move;
+    const toArray = stacks[to - 1];
+    const fromArray = stacks[from - 1];
+
+    for (let i = 0; i < times; i++) {
+      toArray.push(fromArray.pop() || "");
+    }
   });
 
-  const solution = stacks
-    .map((stack) => stack.reverse())
-    .map((stack) => stack[0])
-    .join("");
+  const solution = stacks.map((stack) => stack.pop()).join("");
   return solution;
 };
 
 export const solution2 = (input: string) => {
   const [stacks, moves] = getInput(input);
   moves.forEach((move) => {
-    makeMoveManyCrates(stacks, move);
+    const [times, from, to] = move;
+    const toArray = stacks[to - 1];
+    const fromArray = stacks[from - 1];
+
+    toArray.push(...fromArray.splice(-times));
   });
 
-  const solution = stacks
-    .map((stack) => stack.reverse())
-    .map((stack) => stack[0])
-    .join("");
+  const solution = stacks.map((stack) => stack.pop()).join("");
   return solution;
 };
 
