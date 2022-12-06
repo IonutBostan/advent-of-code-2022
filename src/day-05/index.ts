@@ -6,9 +6,9 @@ export const getInput = (input: string): [string[][], number[][]] => {
   const data = input.split("\n\n");
 
   const storage = data[0]
-    .replaceAll("    ", "[0] ")
+    .replace(/ {4}/g, "[0] ")
     .trim()
-    .replaceAll(/\[|\]| /g, "")
+    .replace(/\[|\]| /g, "")
     .split("\n")
     .map((line) => line.split(""));
 
@@ -20,7 +20,7 @@ export const getInput = (input: string): [string[][], number[][]] => {
   );
 
   const moves = data[1]
-    .replaceAll(/move |from |to /g, "")
+    .replace(/move |from |to /g, "")
     .split("\n")
     .filter((move) => move != "")
     .map((move) => move.split(" ").map(Number));
