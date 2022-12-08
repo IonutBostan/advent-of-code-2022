@@ -37,9 +37,7 @@ export const solution1 = (input: string) => {
 export const solution2 = (input: string) => {
   const trees = getInput(input);
 
-  const scenicScore = new Array(trees.length)
-    .fill(0)
-    .map(() => new Array(trees[0].length).fill(0));
+  let max = 0;
 
   for (let i = 1; i < trees.length - 1; i++) {
     for (let j = 1; j < trees[i].length - 1; j++) {
@@ -77,11 +75,11 @@ export const solution2 = (input: string) => {
         rightIndex += 1;
       }
 
-      scenicScore[i][j] = topCount * bottomCount * leftCount * rightCount;
+      max = Math.max(max, topCount * bottomCount * leftCount * rightCount);
     }
   }
 
-  return Math.max(...scenicScore.map((line) => Math.max(...line)));
+  return max;
 };
 
 console.log(solution1(data));
