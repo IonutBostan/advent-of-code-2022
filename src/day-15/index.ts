@@ -5,177 +5,92 @@ const data = getData(__dirname);
 export const getInput = (input: string) => {
   const lines = input
     .trim()
+    .replaceAll(/[a-zA-Z= ]/g, "")
     .split("\n")
-    .map((line) => line.split(" -> ").map((el) => el.split(",").map(Number)));
+    .map((group) => group.split(":").map((el) => el.split(",").map(Number)));
   return lines;
 };
 
-const isSandOrRock = (e) => ["o", "#"].includes(e);
+const fillIntervals = (
+  coordinate: number[][],
+  extraLines: number,
+  lineNumber: number,
+  lineLength: number
+) => {
+  let posI = coordinate[0][0] + extraLines;
+  let posJ = coordinate[0][1] + extraLines;
+  const distX = Math.abs(coordinate[0][0] - coordinate[1][0]);
+  const distY = Math.abs(coordinate[0][1] - coordinate[1][1]);
 
-const fillInRocks = (lines: number[][][], mat: string[][], minX) => {
-  lines.forEach((line) => {
-    for (let i = 0; i < line.length - 1; i++) {
-      const [x, y] = line[i];
-      const [x1, y1] = line[i + 1];
-      for (let j = x; j <= x1; j++) {
-        mat[j - minX][y] = "#";
-      }
-      for (let j = x; j >= x1; j--) {
-        mat[j - minX][y] = "#";
-      }
-      for (let j = y; j <= y1; j++) {
-        mat[x - minX][j] = "#";
-      }
-      for (let j = y; j >= y1; j--) {
-        mat[x - minX][j] = "#";
-      }
-    }
-  });
+  let size = distX + distY;
+  const pointCount =
+    lineNumber > posJ ? size - lineNumber + posJ : size + lineNumber - posJ;
+  let start = Math.max(posI - pointCount, 0);
+  let end = Math.min(posI + pointCount + 1, lineLength);
+  return [start, end];
 };
 
-export const solution1 = (input: string) => {
+function intersectRanges(ranges: number[][]) {
+  const range = ranges.shift() || [];
+  while (ranges.length > 0) {
+    const currentRange = ranges.shift() || [];
+    if (range[0] <= currentRange[0] && currentRange[1] <= range[1]) {
+    } else if (range[1] < currentRange[0]) {
+      break;
+    } else {
+      range[1] = currentRange[1];
+    }
+  }
+  return range;
+}
+
+export const solution1 = (input: string, lineNumber: number) => {
+  const coordinates = getInput(input);
+  const maxY = Math.max(...coordinates.flat().map(([_x, y]) => y));
+
+  let lineIntervals = [];
+
+  for (let i = 0; i < coordinates.length; i++) {
+    lineIntervals.push(
+      fillIntervals(coordinates[i], maxY, lineNumber + maxY, 3 * maxY)
+    );
+  }
+  lineIntervals = lineIntervals
+    .filter(([start, end]) => start < end)
+    .sort(([startA, startB], [endA, endB]) => startA - endA || startB - endB);
+
+  const range = intersectRanges(lineIntervals);
+
+  return range[1] - range[0] - 1;
+};
+
+export const solution2 = (input: string, maxWidth: number) => {
   const lines = getInput(input);
 
-  const inicialLineNumber = 500;
-  const minX = Math.min(...lines.flat().map(([a]) => a));
-  const maxX = Math.max(...lines.flat().map(([a]) => a));
-  const maxY = Math.max(...lines.flat().map(([_a, b]) => b));
-  const width = maxX + 1;
-  const height = maxY + 10;
+  let result = 0;
 
-  const sandBox = new Array(height)
-    .fill(".")
-    .map(() => new Array(width + 10).fill("."));
+  for (let k = 0; k <= maxWidth; k++) {
+    let lineIntervals = [];
 
-  fillInRocks(lines, sandBox, minX);
-
-  let lineNumber = inicialLineNumber;
-  let index = 0;
-  let level = 0;
-
-  while (true) {
-    let firstBlock = sandBox[lineNumber - minX].indexOf("#", level);
-    let firstSand = sandBox[lineNumber - minX].indexOf("o", level);
-    firstBlock = firstBlock === -1 ? Infinity : firstBlock;
-    firstSand = firstSand === -1 ? Infinity : firstSand;
-
-    let firstSimbol = Math.min(firstBlock, firstSand);
-
-    let newStart = lineNumber - minX;
-    let currentElement = sandBox[newStart][firstSimbol];
-    let currentTop = sandBox[newStart - 1][firstSimbol];
-    let currentBottom = sandBox[newStart + 1][firstSimbol];
-
-    let nextElement = sandBox[newStart][firstSimbol - 1];
-
-    if (isSandOrRock(currentElement)) {
-      level = firstSimbol;
+    for (let i = 0; i < lines.length; i++) {
+      lineIntervals.push(fillIntervals(lines[i], 0, k, maxWidth));
     }
+    lineIntervals = lineIntervals
+      .filter(([a, b]) => a < b)
+      .sort(([a, a1], [b, b1]) => a - b || a1 - b1);
 
-    if (currentTop != "." && currentBottom != "." && nextElement === ".") {
-      sandBox[newStart][firstSimbol - 1] = "o";
-      index++;
-      lineNumber = inicialLineNumber;
-      level = 0;
-    } else if (currentTop === ".") {
-      if (newStart === 1) {
-        break;
-      } else {
-        lineNumber--;
-      }
-    } else if (currentBottom === ".") {
-      if (newStart === maxX + 1) {
-        break;
-      } else {
-        lineNumber++;
-      }
-    } else {
+    const range = intersectRanges(lineIntervals);
+
+    if (range[1] < maxWidth) {
+      result = range[1] * 4000000 + k;
       break;
     }
   }
 
-  return index;
+  return result;
 };
 
-export const solution2 = (input: string) => {
-  const lines = getInput(input);
-
-  const minX = Math.min(...lines.flat().map(([a]) => a));
-  const maxX = Math.max(...lines.flat().map(([a]) => a));
-  const maxY = Math.max(...lines.flat().map(([_a, b]) => b));
-  const height = maxY + 2;
-  const width = maxY + 2;
-
-  const sandBox = new Array(height)
-    .fill(".")
-    .map(() => new Array(width).fill("."));
-  sandBox.map((e) => e.push("#"));
-
-  fillInRocks(lines, sandBox, minX);
-
-  for (let i = 0; i < height; i++) {
-    sandBox.unshift([...Array(width).fill("."), "#"]);
-  }
-
-  for (let i = 0; i < height; i++) {
-    sandBox.push([...Array(width).fill("."), "#"]);
-  }
-
-  const inicialLineNumber = 500 + height;
-
-  let lineNumber = inicialLineNumber;
-  let index = 0;
-  let level = 0;
-
-  while (true) {
-    let firstBlock = sandBox[lineNumber - minX].indexOf("#", level);
-    let firstSand = sandBox[lineNumber - minX].indexOf("o", level);
-    firstBlock = firstBlock === -1 ? Infinity : firstBlock;
-    firstSand = firstSand === -1 ? Infinity : firstSand;
-
-    let firstSimbol = Math.min(firstBlock, firstSand);
-    if (firstSimbol === 0) {
-      break;
-    }
-
-    let newStart = lineNumber - minX;
-    let currentElement = sandBox[newStart][firstSimbol];
-    let currentTop = sandBox[newStart - 1][firstSimbol];
-    let currentBottom = 0;
-    currentBottom = sandBox[newStart + 1][firstSimbol];
-
-    let nextElement = sandBox[newStart][firstSimbol - 1];
-
-    if (isSandOrRock(currentElement)) {
-      level = firstSimbol;
-    }
-
-    if (currentTop != "." && currentBottom != "." && nextElement === ".") {
-      sandBox[newStart][firstSimbol - 1] = "o";
-      index++;
-      lineNumber = inicialLineNumber;
-      level = 0;
-    } else if (currentTop === ".") {
-      if (newStart === 1) {
-        break;
-      } else {
-        lineNumber--;
-      }
-    } else if (currentBottom === ".") {
-      if (newStart === maxX + 1) {
-        break;
-      } else {
-        lineNumber++;
-      }
-    } else {
-      break;
-    }
-  }
-
-  return index;
-};
-
-console.log(solution1(data));
-// 1513
-console.log(solution2(data));
-// 22646
+console.log(solution1(data, 2000000));
+// 5525990
+console.log(solution2(data, 4000000));
+// 11756174628223
